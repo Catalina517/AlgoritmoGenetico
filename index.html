@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Algoritmo genético · Problema del vendedor viajero</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f3f4f7;--paper:#fff;--ink:#16202e;--ink2:#465366;--mute:#7c8799;--line:#dfe3ea;--acc:#2456d6;--acc2:#e8eefc;--ok:#1f8a5b;--warn:#b5651d;--warnbg:#fdf0e3;--mono:'IBM Plex Mono',ui-monospace,monospace;--head:'Space Grotesk',system-ui,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',system-ui,sans-serif;line-height:1.45}
+.wrap{max-width:1240px;margin:0 auto;padding:0 18px}
+header{padding:28px 0 18px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--acc)}
+h1{font-family:var(--head);font-size:clamp(26px,4vw,38px);font-weight:700;letter-spacing:-.01em;margin:6px 0 8px}
+.lead{color:var(--ink2);max-width:760px}
+.motor{display:inline-flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:5px 12px;color:var(--ink2)}
+.motor i{width:8px;height:8px;border-radius:50%;background:#c3c9d4}
+.motor.py i{background:var(--ok)} .motor.js i{background:var(--warn)}
+.grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;align-items:start}
+@media(max-width:980px){.grid{grid-template-columns:1fr}}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:16px}
+h2{font-family:var(--head);font-size:19px;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:10px}
+h2 .n{font-family:var(--mono);font-size:12px;background:var(--acc);color:#fff;border-radius:6px;padding:2px 7px}
+.sub{color:var(--ink2);font-size:14px;margin-bottom:14px}
+.barra{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+button,.btn{font:inherit;font-size:14px;font-weight:500;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:8px;padding:8px 12px;cursor:pointer;white-space:nowrap}
+button:hover,.btn:hover{border-color:var(--acc);color:var(--acc)}
+button.pri{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600;padding:11px 18px;font-size:15px}
+button.pri:hover{filter:brightness(1.08);color:#fff}
+button:disabled{opacity:.5;cursor:not-allowed}
+label.chk{display:inline-flex;gap:6px;align-items:center;font-size:14px;color:var(--ink2);cursor:pointer}
+.campo{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:var(--ink2)}
+input[type=number],input[type=text],select{font:inherit;font-size:14px;border:1px solid var(--line);border-radius:7px;padding:6px 8px;background:#fff;color:var(--ink)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-offset:0}
+.tabla-wrap{overflow:auto;max-height:520px;border:1px solid var(--line);border-radius:8px}
+table.m{border-collapse:separate;border-spacing:0;font-size:12.5px}
+table.m th,table.m td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:0}
+table.m thead th{position:sticky;top:0;background:#f7f8fb;z-index:2}
+table.m th.fila{position:sticky;left:0;background:#f7f8fb;z-index:1}
+table.m thead th.esq{left:0;z-index:3;font-family:var(--mono);font-size:11px;color:var(--mute);padding:4px 6px;text-align:left;min-width:120px}
+table.m input{border:0;border-radius:0;width:64px;padding:6px 5px;text-align:right;font-family:var(--mono);font-size:12.5px;background:transparent}
+table.m th input{width:118px;text-align:left;font-family:'IBM Plex Sans';font-weight:500;font-size:12.5px}
+table.m thead th input{width:74px;text-align:center;font-size:11.5px;padding:7px 3px}
+table.m td.diag{background:#eef0f4}
+table.m td.diag input{color:#aab2c0}
+table.m td.vacia{background:#fff6ec}
+table.m td.mal{background:#fde2e0}
+table.m tr:hover th.fila,table.m td.cruz{background:var(--acc2)}
+.nota{font-size:12.5px;color:var(--mute);margin-top:8px}
+.params{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px 14px}
+.params label{display:flex;flex-direction:column;font-size:12.5px;color:var(--ink2);gap:4px}
+.params label span{display:flex;justify-content:space-between}
+.params label b{font-family:var(--mono);font-weight:500;color:var(--ink)}
+.params input[type=range]{accent-color:var(--acc)}
+.acciones{display:flex;gap:10px;align-items:center;margin-top:16px;flex-wrap:wrap}
+.prog{flex:1;min-width:160px;font-size:13px;color:var(--ink2);font-family:var(--mono)}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.kpi{background:#f7f8fb;border-radius:9px;padding:10px 12px}
+.kpi b{display:block;font-family:var(--head);font-size:24px;font-weight:600;line-height:1.1}
+.kpi span{font-size:12px;color:var(--mute)}
+.ruta{font-size:14.5px;line-height:1.9}
+.ruta .c{display:inline-block;background:var(--acc2);color:var(--acc);border-radius:6px;padding:0 7px;font-weight:500}
+.ruta .c.o{background:var(--acc);color:#fff}
+.ruta .f{color:var(--mute);margin:0 3px}
+canvas{display:block;width:100%}
+.chart{position:relative}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:#fff;font-size:12px;padding:5px 8px;border-radius:6px;opacity:0;white-space:nowrap;z-index:4}
+.leyenda{display:flex;gap:14px;font-size:12.5px;color:var(--ink2);margin-bottom:6px}
+.leyenda i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
+table.t{width:100%;border-collapse:collapse;font-size:13.5px}
+table.t th,table.t td{padding:6px 6px;border-bottom:1px solid var(--line);text-align:left}
+table.t th{color:var(--mute);font-weight:500;font-size:12px}
+table.t td.n{text-align:right;font-family:var(--mono)}
+.aviso{background:var(--warnbg);color:#7a4310;border-radius:8px;padding:9px 12px;font-size:13.5px;margin-bottom:12px}
+dialog{border:1px solid var(--line);border-radius:12px;padding:18px;max-width:640px;width:92vw;margin:auto}
+dialog::backdrop{background:rgba(22,32,46,.35)}
+dialog textarea{width:100%;height:220px;font-family:var(--mono);font-size:12.5px;border:1px solid var(--line);border-radius:8px;padding:8px;margin:10px 0}
+details{margin-top:4px}
+summary{cursor:pointer;font-weight:500}
+pre{background:#0f1724;color:#d7e0ee;border-radius:10px;padding:14px;overflow:auto;font-size:12.5px;max-height:520px;margin-top:10px;font-family:var(--mono);line-height:1.5}
+.pasos{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:6px}
+.paso{background:#f7f8fb;border-radius:9px;padding:10px 12px;font-size:13.5px;color:var(--ink2)}
+.paso b{display:block;color:var(--ink);font-size:14px;margin-bottom:2px}
+footer{padding:10px 0 40px;font-size:12.5px;color:var(--mute)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="eyebrow">Algoritmo genético · Optimización combinatoria</div>
+  <h1>Problema del vendedor viajero</h1>
+  <p class="lead">Ingrese el costo (distancia) de ir de cada ciudad a cada otra. El algoritmo genético, programado en Python, busca la ruta más corta que visita todas las ciudades una sola vez y vuelve al punto de partida.</p>
+  <div class="motor" id="motor"><i></i><span>Cargando el intérprete de Python…</span></div>
+</header>
+
+<div class="grid">
+  <div>
+    <div class="card">
+      <h2><span class="n">1</span>Ciudades y costos</h2>
+      <p class="sub">Cada celda es el costo de ir de la ciudad de la <b>fila</b> a la ciudad de la <b>columna</b>. Deje una celda vacía si no hay camino directo. Los nombres también se pueden editar.</p>
+      <div class="barra">
+        <span class="campo">Ciudades <input type="number" id="nCiud" min="20" max="80" value="22" style="width:66px"></span>
+        <button id="bAplicarN">Cambiar tamaño</button>
+        <button id="bEjemplo">Ejemplo: Colombia</button>
+        <button id="bAleat">Aleatoria</button>
+        <button id="bPegar">Pegar desde Excel</button>
+        <label class="btn" for="fCsv">Abrir CSV</label><input type="file" id="fCsv" accept=".csv,.txt,text/csv" hidden>
+        <button id="bCopiar">Copiar como CSV</button>
+      </div>
+      <div class="barra">
+        <label class="chk"><input type="checkbox" id="simetrica" checked> Matriz simétrica (al escribir A→B se copia en B→A)</label>
+      </div>
+      <div class="tabla-wrap"><table class="m" id="tabla"></table></div>
+      <p class="nota" id="notaMatriz"></p>
+    </div>
+
+    <div class="card">
+      <h2><span class="n">2</span>Parámetros del algoritmo genético</h2>
+      <div class="params">
+        <label><span>Tamaño de población <b id="vPob">200</b></span><input type="range" id="pob" min="20" max="600" step="10" value="200"></label>
+        <label><span>Generaciones máximas <b id="vGen">500</b></span><input type="range" id="gen" min="50" max="3000" step="50" value="500"></label>
+        <label><span>Paciencia (sin mejora) <b id="vPac">200</b></span><input type="range" id="pac" min="20" max="1000" step="10" value="200"></label>
+        <label><span>Probabilidad de cruce <b id="vPc">0,90</b></span><input type="range" id="pc" min="0" max="1" step="0.05" value="0.9"></label>
+        <label><span>Probabilidad de mutación <b id="vPm">0,20</b></span><input type="range" id="pm" min="0" max="1" step="0.05" value="0.2"></label>
+        <label><span>Elitismo <b id="vEl">2</b></span><input type="range" id="el" min="0" max="20" step="1" value="2"></label>
+        <label><span>Tamaño del torneo <b id="vTo">3</b></span><input type="range" id="to" min="2" max="10" step="1" value="3"></label>
+        <label><span>Semilla aleatoria</span><input type="text" id="semilla" placeholder="(al azar)"></label>
+        <label><span>Ciudad de origen</span><select id="origen"></select></label>
+      </div>
+      <div class="barra" style="margin-top:12px;margin-bottom:0">
+        <label class="chk"><input type="checkbox" id="opt2" checked> Búsqueda local 2-opt / Or-opt (algoritmo memético)</label>
+      </div>
+      <div class="acciones">
+        <button class="pri" id="bEjecutar">▶ Buscar ruta óptima</button>
+        <button id="bDetener" disabled>Detener</button>
+        <div class="prog" id="prog"></div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="card" id="cardRes">
+      <h2><span class="n">3</span>Ruta óptima encontrada</h2>
+      <div id="avisos"></div>
+      <div class="kpis">
+        <div class="kpi"><b id="kCosto">—</b><span>costo total</span></div>
+        <div class="kpi"><b id="kGen">—</b><span>generaciones</span></div>
+        <div class="kpi"><b id="kMejora">—</b><span>mejora vs. promedio inicial</span></div>
+      </div>
+      <div class="ruta" id="ruta"><span style="color:var(--mute)">Presione «Buscar ruta óptima».</span></div>
+    </div>
+    <div class="card">
+      <h2 style="font-size:16px">Mapa de la ruta</h2>
+      <p class="nota" id="notaMapa" style="margin:0 0 6px"></p>
+      <div class="chart" id="chMapa"><canvas id="mapa" height="420"></canvas><div class="tip"></div></div>
+    </div>
+    <div class="card">
+      <h2 style="font-size:16px">Evolución del costo</h2>
+      <div class="leyenda"><span><i style="background:var(--acc)"></i>Mejor individuo</span><span><i style="background:#a9b3c4"></i>Promedio de la población</span></div>
+      <div class="chart" id="chConv"><canvas id="conv" height="220"></canvas><div class="tip"></div></div>
+    </div>
+    <div class="card">
+      <h2 style="font-size:16px">Tramos de la ruta</h2>
+      <table class="t" id="tramos"><tr><td style="color:var(--mute)">Sin resultados todavía.</td></tr></table>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Cómo funciona el algoritmo genético</h2>
+  <div class="pasos">
+    <div class="paso"><b>1. Cromosoma</b>Cada individuo es una ruta: una permutación de las ciudades. Su aptitud es el costo total del recorrido cerrado.</div>
+    <div class="paso"><b>2. Población inicial</b>Rutas al azar más algunas construidas con el vecino más cercano.</div>
+    <div class="paso"><b>3. Selección por torneo</b>Se toman k rutas al azar y la de menor costo es padre.</div>
+    <div class="paso"><b>4. Cruce OX</b>El hijo copia un tramo del padre 1 y completa con las ciudades restantes en el orden del padre 2, sin repetir.</div>
+    <div class="paso"><b>5. Mutación</b>Intercambia dos ciudades o invierte un tramo de la ruta.</div>
+    <div class="paso"><b>6. Elitismo y diversidad</b>Las mejores rutas pasan intactas; las rutas repetidas se reemplazan por inmigrantes al azar.</div>
+    <div class="paso"><b>7. Búsqueda local</b>2-opt y Or-opt pulen la mejor ruta, y una perturbación «doble puente» ayuda a salir de óptimos locales.</div>
+    <div class="paso"><b>8. Parada</b>Al llegar a las generaciones máximas o si el mejor no mejora durante «paciencia» generaciones.</div>
+  </div>
+  <details style="margin-top:14px"><summary>Ver el código Python que se ejecuta (ga_tsp.py)</summary>
+    <div class="barra" style="margin:10px 0 0"><button id="bCopiarPy">Copiar código</button></div>
+    <pre id="codigo"></pre>
+  </details>
+</div>
+<footer>Las distancias del ejemplo de Colombia son en línea recta (km, fórmula de Haversine); puede reemplazarlas por distancias por carretera, tiempos o costos. Celda vacía = sin conexión directa (el algoritmo la penaliza).</footer>
+</div>
+
+<dialog id="dlgPegar">
+  <h2 style="font-size:17px">Pegar matriz</h2>
+  <p class="sub" style="margin:4px 0 0">Copie la tabla desde Excel o Google Sheets y péguela aquí. Si la primera fila y la primera columna tienen nombres, se usan como nombres de las ciudades.</p>
+  <textarea id="txtPegar" placeholder="	Bogotá	Medellín	Cali&#10;Bogotá	0	240	300&#10;Medellín	240	0	320&#10;Cali	300	320	0"></textarea>
+  <div class="barra" style="justify-content:flex-end;margin:0"><span id="errPegar" style="color:#b3261e;font-size:13px;margin-right:auto"></span><button id="bCancelar">Cancelar</button><button class="pri" id="bOkPegar" style="padding:8px 14px;font-size:14px">Usar esta matriz</button></div>
+</dialog>
+
+<script type="text/x-python" id="py-src">"""
+Algoritmo genético para el problema del vendedor viajero (TSP).
+
+Representación : cada individuo es una permutación de las ciudades (ruta cerrada).
+Aptitud        : costo total de la ruta (ir de ciudad en ciudad y volver al origen); menor es mejor.
+Selección      : torneo.
+Cruce          : OX (Order Crossover), conserva el orden relativo de las ciudades.
+Mutación       : intercambio (swap) o inversión de un tramo.
+Elitismo       : los mejores individuos pasan intactos a la siguiente generación.
+Diversidad     : los individuos repetidos se reemplazan por inmigrantes aleatorios.
+Mejora local   : 2-opt + Or-opt opcional sobre el mejor individuo, y en cada generación un
+                 hijo extra = mejor ruta con perturbación "doble puente" + búsqueda local
+                 (algoritmo memético; ayuda a escapar de óptimos locales, también en matrices asimétricas).
+
+La matriz de costos puede ser asimétrica (ir de A a B puede costar distinto que de B a A).
+Una celda vacía o None significa que no hay conexión directa entre esas ciudades.
+
+Uso desde la terminal:
+    python ga_tsp.py                      # ejemplo con 22 ciudades de Colombia
+    python ga_tsp.py matriz.csv           # matriz propia (primera fila y columna = nombres)
+    python ga_tsp.py matriz.csv --gen 800 --pob 300 --semilla 7
+"""
+import math
+import random
+
+SIN_CONEXION = None          # valor que representa "no hay ruta directa"
+
+
+class AlgoritmoGenetico:
+    def __init__(self, costos, poblacion=200, prob_cruce=0.9, prob_mutacion=0.2,
+                 elitismo=2, torneo=3, usar_2opt=True, semilla=None):
+        self.n = len(costos)
+        if self.n < 3:
+            raise ValueError("Se necesitan al menos 3 ciudades.")
+        if any(len(fila) != self.n for fila in costos):
+            raise ValueError("La matriz de costos debe ser cuadrada.")
+        # Penalización para tramos sin conexión: mayor que cualquier ruta posible
+        validos = [c for i, f in enumerate(costos) for j, c in enumerate(f) if i != j and c is not None]
+        if not validos:
+            raise ValueError("La matriz no tiene costos.")
+        self.penalizacion = (max(validos) + 1) * self.n * 10
+        self.C = [[0.0 if i == j else (self.penalizacion if c is None else float(c))
+                   for j, c in enumerate(fila)] for i, fila in enumerate(costos)]
+        self.tam = max(10, int(poblacion))
+        self.pc, self.pm = float(prob_cruce), float(prob_mutacion)
+        self.elite = max(0, min(int(elitismo), self.tam - 1))
+        self.k = max(2, int(torneo))
+        self.usar_2opt = bool(usar_2opt)
+        self.rnd = random.Random(semilla)
+        self.generacion = 0
+        self.historial = []          # (mejor costo, costo promedio) por generación
+        self.poblacion = self._poblacion_inicial()
+        self._evaluar()
+
+    # ---------------- aptitud ----------------
+    def costo(self, ruta):
+        C = self.C
+        return sum(C[ruta[i - 1]][ruta[i]] for i in range(len(ruta)))
+
+    def _evaluar(self):
+        # diversidad: una ruta repetida (en cualquier rotación) se cambia por un inmigrante aleatorio
+        vistos = set()
+        for i, r in enumerate(self.poblacion):
+            k = r.index(0); clave = tuple(r[k:] + r[:k])
+            if clave in vistos and i >= self.elite:
+                r = list(range(self.n)); self.rnd.shuffle(r); self.poblacion[i] = r
+            vistos.add(clave)
+        self.costos = [self.costo(r) for r in self.poblacion]
+        orden = sorted(range(self.tam), key=self.costos.__getitem__)
+        self.poblacion = [self.poblacion[i] for i in orden]
+        self.costos = [self.costos[i] for i in orden]
+        if self.usar_2opt:
+            mejorada = self._dos_opt(self.poblacion[0])
+            c = self.costo(mejorada)
+            if c < self.costos[0]:
+                self.poblacion[0], self.costos[0] = mejorada, c
+        self.mejor_ruta, self.mejor_costo = self.poblacion[0][:], self.costos[0]
+        self.historial.append((self.mejor_costo, sum(self.costos) / self.tam))
+
+    # ---------------- población inicial ----------------
+    def _poblacion_inicial(self):
+        ciudades = list(range(self.n))
+        pob = []
+        # unas pocas rutas del vecino más cercano (desde orígenes distintos) dan buen punto de partida
+        for inicio in self.rnd.sample(ciudades, min(self.n, max(1, self.tam // 20))):
+            pob.append(self._vecino_mas_cercano(inicio))
+        while len(pob) < self.tam:
+            r = ciudades[:]
+            self.rnd.shuffle(r)
+            pob.append(r)
+        return pob
+
+    def _vecino_mas_cercano(self, inicio):
+        ruta, libres = [inicio], set(range(self.n)) - {inicio}
+        while libres:
+            a = ruta[-1]
+            b = min(libres, key=lambda j: self.C[a][j])
+            ruta.append(b)
+            libres.remove(b)
+        return ruta
+
+    # ---------------- operadores genéticos ----------------
+    def _torneo(self):
+        # la población está ordenada por costo: el índice menor del torneo es el ganador
+        return self.poblacion[min(self.rnd.randrange(self.tam) for _ in range(self.k))]
+
+    def _cruce_ox(self, p1, p2):
+        n = self.n
+        a, b = sorted(self.rnd.sample(range(n), 2))
+        hijo = [None] * n
+        hijo[a:b + 1] = p1[a:b + 1]
+        usados = set(p1[a:b + 1])
+        pos = (b + 1) % n
+        for gen in p2[b + 1:] + p2[:b + 1]:
+            if gen not in usados:
+                hijo[pos] = gen
+                pos = (pos + 1) % n
+        return hijo
+
+    def _mutar(self, r):
+        i, j = sorted(self.rnd.sample(range(self.n), 2))
+        if self.rnd.random() < 0.5:
+            r[i], r[j] = r[j], r[i]                 # intercambio
+        else:
+            r[i:j + 1] = reversed(r[i:j + 1])       # inversión de un tramo
+        return r
+
+    def _doble_puente(self, r):
+        """Perturbación doble puente: corta la ruta en 4 tramos A B C D y la reordena A C B D."""
+        a, b, c = sorted(self.rnd.sample(range(1, self.n), 3))
+        return r[:a] + r[b:c] + r[a:b] + r[c:]
+
+    def _dos_opt(self, ruta):
+        """Búsqueda local: 2-opt (invertir un tramo) y Or-opt (mover un bloque de 1 a 3 ciudades)
+        mientras el costo baje."""
+        r, mejor, n = ruta[:], self.costo(ruta), self.n
+        mejoro = True
+        while mejoro:
+            mejoro = False
+            for i in range(1, n - 1):
+                for j in range(i + 1, n):
+                    cand = r[:i] + r[i:j + 1][::-1] + r[j + 1:]
+                    c = self.costo(cand)
+                    if c < mejor - 1e-9:
+                        r, mejor, mejoro = cand, c, True
+            for L in (1, 2, 3):
+                for i in range(n - L + 1):
+                    bloque, resto = r[i:i + L], r[:i] + r[i + L:]
+                    for k in range(len(resto) + 1):
+                        if k == i: continue
+                        cand = resto[:k] + bloque + resto[k:]
+                        c = self.costo(cand)
+                        if c < mejor - 1e-9:
+                            r, mejor, mejoro = cand, c, True
+                            break
+                    if mejoro: break
+                if mejoro: break
+        return r
+
+    # ---------------- ciclo evolutivo ----------------
+    def paso(self, generaciones=1):
+        """Avanza el número de generaciones indicado y devuelve el estado actual."""
+        for _ in range(int(generaciones)):
+            nueva = [r[:] for r in self.poblacion[:self.elite]]
+            if self.usar_2opt and self.n >= 8:
+                nueva.append(self._dos_opt(self._doble_puente(self.mejor_ruta)))
+            while len(nueva) < self.tam:
+                p1, p2 = self._torneo(), self._torneo()
+                hijo = self._cruce_ox(p1, p2) if self.rnd.random() < self.pc else p1[:]
+                if self.rnd.random() < self.pm:
+                    hijo = self._mutar(hijo)
+                nueva.append(hijo)
+            self.poblacion = nueva
+            self.generacion += 1
+            self._evaluar()
+        return self.estado()
+
+    def ruta_desde(self, origen=0):
+        r = self.mejor_ruta
+        k = r.index(origen)
+        return r[k:] + r[:k] + [origen]
+
+    def estado(self, origen=0):
+        return {
+            "generacion": self.generacion,
+            "mejor_costo": self.mejor_costo,
+            "promedio": self.historial[-1][1],
+            "ruta": self.ruta_desde(origen),
+            "usa_tramo_inexistente": self.mejor_costo >= self.penalizacion,
+        }
+
+    def resolver(self, max_generaciones=500, paciencia=200, origen=0):
+        """Evoluciona hasta max_generaciones o hasta que el mejor no mejore en `paciencia` generaciones."""
+        sin_mejora, mejor = 0, self.mejor_costo
+        while self.generacion < max_generaciones and sin_mejora < paciencia:
+            self.paso()
+            if self.mejor_costo < mejor - 1e-9:
+                mejor, sin_mejora = self.mejor_costo, 0
+            else:
+                sin_mejora += 1
+        return self.estado(origen)
+
+
+# ---------------- datos de ejemplo: 22 ciudades de Colombia ----------------
+CIUDADES_COLOMBIA = [
+    ("Bogotá", 4.711, -74.072), ("Medellín", 6.244, -75.581), ("Cali", 3.452, -76.532),
+    ("Barranquilla", 10.964, -74.796), ("Cartagena", 10.391, -75.479), ("Cúcuta", 7.894, -72.508),
+    ("Bucaramanga", 7.119, -73.123), ("Pereira", 4.813, -75.696), ("Santa Marta", 11.241, -74.199),
+    ("Ibagué", 4.438, -75.232), ("Pasto", 1.214, -77.281), ("Manizales", 5.070, -75.514),
+    ("Neiva", 2.927, -75.282), ("Villavicencio", 4.142, -73.627), ("Armenia", 4.534, -75.681),
+    ("Valledupar", 10.463, -73.253), ("Montería", 8.748, -75.881), ("Sincelejo", 9.304, -75.398),
+    ("Popayán", 2.444, -76.614), ("Tunja", 5.535, -73.368), ("Riohacha", 11.544, -72.907),
+    ("Quibdó", 5.694, -76.661),
+]
+
+
+def distancia_km(a, b):
+    """Distancia en línea recta (fórmula de Haversine) entre dos (lat, lon)."""
+    la1, lo1, la2, lo2 = map(math.radians, (a[0], a[1], b[0], b[1]))
+    h = math.sin((la2 - la1) / 2) ** 2 + math.cos(la1) * math.cos(la2) * math.sin((lo2 - lo1) / 2) ** 2
+    return 2 * 6371 * math.asin(math.sqrt(h))
+
+
+def matriz_ejemplo():
+    nombres = [c[0] for c in CIUDADES_COLOMBIA]
+    M = [[0 if i == j else round(distancia_km(a[1:], b[1:])) for j, b in enumerate(CIUDADES_COLOMBIA)]
+         for i, a in enumerate(CIUDADES_COLOMBIA)]
+    return nombres, M
+
+
+def leer_csv(ruta):
+    """Lee una matriz CSV con nombres en la primera fila y la primera columna (separador , ; o tab)."""
+    import csv
+    with open(ruta, encoding="utf-8-sig") as f:
+        muestra = f.read(2048); f.seek(0)
+        dialecto = csv.Sniffer().sniff(muestra, delimiters=",;\t")
+        filas = [f for f in csv.reader(f, dialecto) if any(x.strip() for x in f)]
+    nombres = [x.strip() for x in filas[0][1:]]
+    M = [[(float(x.replace(",", ".")) if x.strip() else None) for x in fila[1:]] for fila in filas[1:]]
+    return nombres, M
+
+
+if __name__ == "__main__":
+    import argparse, time
+    ap = argparse.ArgumentParser(description="Algoritmo genético para el vendedor viajero")
+    ap.add_argument("csv", nargs="?", help="matriz de costos en CSV (opcional)")
+    ap.add_argument("--pob", type=int, default=200)
+    ap.add_argument("--gen", type=int, default=500)
+    ap.add_argument("--pc", type=float, default=0.9)
+    ap.add_argument("--pm", type=float, default=0.2)
+    ap.add_argument("--elite", type=int, default=2)
+    ap.add_argument("--sin2opt", action="store_true")
+    ap.add_argument("--semilla", type=int, default=None)
+    a = ap.parse_args()
+    nombres, M = leer_csv(a.csv) if a.csv else matriz_ejemplo()
+    t = time.time()
+    ag = AlgoritmoGenetico(M, a.pob, a.pc, a.pm, a.elite, usar_2opt=not a.sin2opt, semilla=a.semilla)
+    res = ag.resolver(a.gen)
+    print(f"{len(nombres)} ciudades · {res['generacion']} generaciones · {time.time() - t:.1f} s")
+    print("Mejor ruta encontrada:")
+    print("  " + " → ".join(nombres[i] for i in res["ruta"]))
+    print(f"Costo total: {res['mejor_costo']:.1f}")
+</script>
+<script>
+const $ = s => document.querySelector(s);
+const PY = $('#py-src').textContent;
+$('#codigo').textContent = PY;
+const fmt = (v, d = 0) => Number(v).toLocaleString('es-CO', { minimumFractionDigits: d, maximumFractionDigits: d });
+
+/* =============== Datos de ejemplo (mismos que en ga_tsp.py) =============== */
+const COL = [["Bogotá",4.711,-74.072],["Medellín",6.244,-75.581],["Cali",3.452,-76.532],["Barranquilla",10.964,-74.796],["Cartagena",10.391,-75.479],["Cúcuta",7.894,-72.508],["Bucaramanga",7.119,-73.123],["Pereira",4.813,-75.696],["Santa Marta",11.241,-74.199],["Ibagué",4.438,-75.232],["Pasto",1.214,-77.281],["Manizales",5.070,-75.514],["Neiva",2.927,-75.282],["Villavicencio",4.142,-73.627],["Armenia",4.534,-75.681],["Valledupar",10.463,-73.253],["Montería",8.748,-75.881],["Sincelejo",9.304,-75.398],["Popayán",2.444,-76.614],["Tunja",5.535,-73.368],["Riohacha",11.544,-72.907],["Quibdó",5.694,-76.661]];
+function haversine(a, b) { const r = Math.PI / 180, [la1, lo1, la2, lo2] = [a[0] * r, a[1] * r, b[0] * r, b[1] * r];
+  const h = Math.sin((la2 - la1) / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin((lo2 - lo1) / 2) ** 2; return 2 * 6371 * Math.asin(Math.sqrt(h)); }
+
+/* =============== Estado =============== */
+const MIN_CIUDADES = 20, MAX_CIUDADES = 80;
+function limitarN(n) { n = parseInt(n) || MIN_CIUDADES; return Math.max(MIN_CIUDADES, Math.min(MAX_CIUDADES, n)); }
+let nombres = [], M = [], coords = null;   // coords: posiciones reales (solo ejemplo) o null
+function ejemplo() {
+  nombres = COL.map(c => c[0]);
+  M = COL.map((a, i) => COL.map((b, j) => i === j ? 0 : Math.round(haversine(a.slice(1), b.slice(1)))));
+  coords = COL.map(c => [c[2], c[1]]);
+}
+function aleatoria(n) {
+  n = limitarN(n);
+  const P = Array.from({ length: n }, () => [Math.random() * 100, Math.random() * 100]);
+  nombres = Array.from({ length: n }, (_, i) => 'Ciudad ' + (i + 1));
+  M = P.map((a, i) => P.map((b, j) => i === j ? 0 : Math.round(Math.hypot(a[0] - b[0], a[1] - b[1]) * 10)));
+  coords = P.map(p => [p[0], -p[1]]);
+}
+function redimensionar(n) {
+  n = limitarN(n);
+  const viejo = M.length;
+  nombres = Array.from({ length: n }, (_, i) => nombres[i] || 'Ciudad ' + (i + 1));
+  M = Array.from({ length: n }, (_, i) => Array.from({ length: n }, (_, j) => i === j ? 0 : (i < viejo && j < viejo ? M[i][j] : null)));
+  if (coords && n !== viejo) coords = null;
+}
+function guardar() { try { localStorage.setItem('tsp-matriz', JSON.stringify({ nombres, M, coords })); } catch (e) {} }
+function cargarGuardada() { try { const d = JSON.parse(localStorage.getItem('tsp-matriz')); if (d && d.M && d.M.length >= 20) { ({ nombres, M, coords } = d); return true; } } catch (e) {} return false; }
+
+/* =============== Tabla editable =============== */
+function pintarTabla() {
+  const n = M.length;
+  let h = '<thead><tr><th class="esq">desde ↓ / hacia →</th>' + nombres.map((c, j) => `<th><input data-col="${j}" value="${esc(c)}" title="${esc(c)}"></th>`).join('') + '</tr></thead><tbody>';
+  for (let i = 0; i < n; i++) {
+    h += `<tr><th class="fila"><input data-nom="${i}" value="${esc(nombres[i])}"></th>`;
+    for (let j = 0; j < n; j++) {
+      const v = M[i][j];
+      h += i === j ? `<td class="diag"><input value="0" disabled></td>` :
+        `<td class="${v === null ? 'vacia' : ''}"><input data-i="${i}" data-j="${j}" inputmode="decimal" value="${v === null ? '' : v}"></td>`;
+    }
+    h += '</tr>';
+  }
+  $('#tabla').innerHTML = h + '</tbody>';
+  $('#nCiud').value = n;
+  pintarOrigen(); notaMatriz(); guardar();
+}
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+function notaMatriz() {
+  let vac = 0, asim = 0, n = M.length;
+  for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) if (i !== j) { if (M[i][j] === null) vac++; else if (j > i && M[j][i] !== null && M[i][j] !== M[j][i]) asim++; }
+  $('#notaMatriz').textContent = `${n} ciudades · ${n * (n - 1)} costos` + (vac ? ` · ${vac} celdas vacías (sin conexión)` : '') + (asim ? ` · ${asim} pares con costo distinto según el sentido (asimétrica)` : ' · simétrica');
+}
+function pintarOrigen() {
+  const o = $('#origen'), v = +o.value || 0;
+  o.innerHTML = nombres.map((c, i) => `<option value="${i}">${esc(c)}</option>`).join(''); o.value = Math.min(v, nombres.length - 1);
+}
+$('#tabla').addEventListener('input', e => {
+  const t = e.target;
+  if (t.dataset.nom !== undefined || t.dataset.col !== undefined) {
+    const k = +(t.dataset.nom ?? t.dataset.col); nombres[k] = t.value;
+    const otro = t.dataset.nom !== undefined ? `[data-col="${k}"]` : `[data-nom="${k}"]`; $('#tabla ' + otro).value = t.value;
+    pintarOrigen(); guardar(); return;
+  }
+  const i = +t.dataset.i, j = +t.dataset.j, txt = t.value.trim().replace(',', '.');
+  const v = txt === '' ? null : Number(txt), td = t.parentElement;
+  td.classList.toggle('mal', txt !== '' && (!isFinite(v) || v < 0));
+  td.classList.toggle('vacia', txt === '');
+  if (txt !== '' && (!isFinite(v) || v < 0)) return;
+  M[i][j] = v; coords = coords && $('#simetrica').checked ? coords : (coords ? null : null);
+  if ($('#simetrica').checked) { M[j][i] = v; const o = $(`#tabla input[data-i="${j}"][data-j="${i}"]`); o.value = t.value; o.parentElement.className = td.className; }
+  notaMatriz(); guardar();
+});
+$('#tabla').addEventListener('keydown', e => {           // navegar con flechas / Enter
+  const t = e.target; if (t.dataset.i === undefined) return;
+  let i = +t.dataset.i, j = +t.dataset.j, n = M.length;
+  const mov = { ArrowUp: [-1, 0], ArrowDown: [1, 0], Enter: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] }[e.key];
+  if (!mov || ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && t.selectionStart !== t.selectionEnd)) return;
+  do { i = (i + mov[0] + n) % n; j = (j + mov[1] + n) % n; } while (i === j);
+  const s = $(`#tabla input[data-i="${i}"][data-j="${j}"]`); if (s) { e.preventDefault(); s.focus(); s.select(); }
+});
+$('#tabla').addEventListener('focusin', e => { const t = e.target; document.querySelectorAll('td.cruz').forEach(x => x.classList.remove('cruz'));
+  if (t.dataset.i !== undefined) { const o = $(`#tabla input[data-i="${t.dataset.j}"][data-j="${t.dataset.i}"]`); o && o.parentElement.classList.add('cruz'); } });
+
+$('#bEjemplo').onclick = () => { ejemplo(); pintarTabla(); };
+$('#bAleat').onclick = () => { aleatoria($('#nCiud').value); pintarTabla(); };
+$('#nCiud').addEventListener('change', e => { const v = limitarN(e.target.value); if (String(v) !== e.target.value) { e.target.value = v; mostrarAviso(`El número de ciudades debe estar entre ${MIN_CIUDADES} y ${MAX_CIUDADES}; se ajustó a ${v}.`); } });
+$('#bAplicarN').onclick = () => { redimensionar(+$('#nCiud').value); pintarTabla(); };
+
+/* --- pegar / CSV --- */
+function parsearTexto(txt) {
+  const lineas = txt.replace(/\r/g, '').split('\n').filter(l => l.trim());
+  const sep = lineas[0].includes('\t') ? '\t' : lineas[0].includes(';') ? ';' : ',';
+  let filas = lineas.map(l => l.split(sep).map(x => x.trim()));
+  const esNum = x => x === '' || isFinite(Number(x.replace(',', '.')));
+  let noms = null;
+  if (filas[0].slice(1).some(x => !esNum(x)) || (filas[0][0] === '' && filas[0].length > filas[1].length - 1)) { noms = filas[0].slice(1); filas = filas.slice(1); }
+  const tieneCol = filas.every(f => !esNum(f[0]) || f.length === filas.length + 1);
+  if (tieneCol) { if (!noms) noms = filas.map(f => f[0]); filas = filas.map(f => f.slice(1)); }
+  const n = filas.length;
+  if (n < 20) throw new Error(`Se necesitan al menos 20 ciudades (hay ${n}).`);
+  if (filas.some(f => f.length < n)) throw new Error('La matriz debe ser cuadrada: cada fila necesita ' + n + ' valores.');
+  const MM = filas.map((f, i) => f.slice(0, n).map((x, j) => { if (i === j) return 0; if (x === '' || x === '-') return null; const v = Number(x.replace(',', '.')); if (!isFinite(v) || v < 0) throw new Error(`Valor no válido en fila ${i + 1}, columna ${j + 1}: «${x}»`); return v; }));
+  return { noms: (noms && noms.length >= n ? noms.slice(0, n) : Array.from({ length: n }, (_, i) => 'Ciudad ' + (i + 1))), MM };
+}
+$('#bPegar').onclick = () => { $('#errPegar').textContent = ''; $('#dlgPegar').showModal(); };
+$('#bCancelar').onclick = () => $('#dlgPegar').close();
+$('#bOkPegar').onclick = () => { try { const r = parsearTexto($('#txtPegar').value); nombres = r.noms; M = r.MM; coords = null; pintarTabla(); $('#dlgPegar').close(); } catch (e) { $('#errPegar').textContent = e.message; } };
+$('#fCsv').onchange = async e => { const f = e.target.files[0]; if (!f) return; try { const r = parsearTexto(await f.text()); nombres = r.noms; M = r.MM; coords = null; pintarTabla(); } catch (er) { mostrarAviso('No se pudo leer el CSV: ' + er.message); } e.target.value = ''; };
+$('#bCopiar').onclick = async () => {
+  const csv = [';' + nombres.join(';'), ...M.map((f, i) => nombres[i] + ';' + f.map(v => v === null ? '' : String(v).replace('.', ',')).join(';'))].join('\n');
+  try { await navigator.clipboard.writeText(csv); $('#bCopiar').textContent = '¡Copiado!'; } catch (e) { $('#bCopiar').textContent = 'No se pudo copiar'; }
+  setTimeout(() => $('#bCopiar').textContent = 'Copiar como CSV', 1600);
+};
+$('#bCopiarPy').onclick = async () => { try { await navigator.clipboard.writeText(PY); $('#bCopiarPy').textContent = '¡Copiado!'; } catch (e) {} setTimeout(() => $('#bCopiarPy').textContent = 'Copiar código', 1600); };
+
+/* --- parámetros --- */
+[['pob', 'vPob', 0], ['gen', 'vGen', 0], ['pac', 'vPac', 0], ['pc', 'vPc', 2], ['pm', 'vPm', 2], ['el', 'vEl', 0], ['to', 'vTo', 0]].forEach(([id, v, d]) => {
+  const f = () => $('#' + v).textContent = fmt(+$('#' + id).value, d); $('#' + id).addEventListener('input', f); f(); });
+
+/* =============== Motor: Python (Pyodide) con respaldo en JavaScript =============== */
+// --- Versión JavaScript del mismo algoritmo (se usa solo si Python no carga) ---
+function rngSemilla(s) { let a = s >>> 0; return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+class AGjs {
+  constructor(costos, o) {
+    this.n = costos.length; const val = [];
+    costos.forEach((f, i) => f.forEach((c, j) => { if (i !== j && c !== null) val.push(c); }));
+    this.pen = (Math.max(...val) + 1) * this.n * 10;
+    this.C = costos.map((f, i) => f.map((c, j) => i === j ? 0 : c === null ? this.pen : +c));
+    this.tam = Math.max(10, o.poblacion | 0); this.pc = o.prob_cruce; this.pm = o.prob_mutacion;
+    this.elite = Math.max(0, Math.min(o.elitismo | 0, this.tam - 1)); this.k = Math.max(2, o.torneo | 0); this.opt = o.usar_2opt;
+    this.r = rngSemilla(o.semilla ?? (Math.random() * 2 ** 32)); this.generacion = 0;
+    const cs = [...Array(this.n).keys()]; this.pob = [];
+    const ini = this.muestra(cs, Math.min(this.n, Math.max(1, (this.tam / 20) | 0)));
+    ini.forEach(s => this.pob.push(this.vecino(s)));
+    while (this.pob.length < this.tam) this.pob.push(this.barajar(cs.slice()));
+    this.evaluar();
+  }
+  ri(n) { return (this.r() * n) | 0; }
+  barajar(a) { for (let i = a.length - 1; i > 0; i--) { const j = this.ri(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+  muestra(a, k) { return this.barajar(a.slice()).slice(0, k); }
+  costo(r) { let s = 0; const C = this.C, n = r.length; for (let i = 0; i < n; i++) s += C[r[(i - 1 + n) % n]][r[i]]; return s; }
+  vecino(s) { const r = [s], lib = new Set([...Array(this.n).keys()]); lib.delete(s);
+    while (lib.size) { const a = r[r.length - 1]; let b = -1, m = Infinity; for (const j of lib) if (this.C[a][j] < m) { m = this.C[a][j]; b = j; } r.push(b); lib.delete(b); } return r; }
+  evaluar() {
+    const vistos = new Set();
+    this.pob.forEach((r, i) => { const k = r.indexOf(0), cl = r.slice(k).concat(r.slice(0, k)).join(',');
+      if (vistos.has(cl) && i >= this.elite) this.pob[i] = this.barajar([...Array(this.n).keys()]); vistos.add(cl); });
+    let cs = this.pob.map(r => this.costo(r)); const ord = cs.map((c, i) => i).sort((a, b) => cs[a] - cs[b]);
+    this.pob = ord.map(i => this.pob[i]); this.costos = ord.map(i => cs[i]);
+    if (this.opt) { const m = this.dosOpt(this.pob[0]), c = this.costo(m); if (c < this.costos[0]) { this.pob[0] = m; this.costos[0] = c; } }
+    this.mejor = this.pob[0].slice(); this.mejorCosto = this.costos[0];
+    this.promedio = this.costos.reduce((a, b) => a + b, 0) / this.tam;
+  }
+  torneo() { let m = this.tam; for (let i = 0; i < this.k; i++) m = Math.min(m, this.ri(this.tam)); return this.pob[m]; }
+  cruce(p1, p2) { const n = this.n; let [a, b] = this.muestra([...Array(n).keys()], 2).sort((x, y) => x - y);
+    const h = new Array(n).fill(null), us = new Set(); for (let i = a; i <= b; i++) { h[i] = p1[i]; us.add(p1[i]); }
+    let pos = (b + 1) % n; for (const g of p2.slice(b + 1).concat(p2.slice(0, b + 1))) if (!us.has(g)) { h[pos] = g; pos = (pos + 1) % n; } return h; }
+  mutar(r) { let [i, j] = this.muestra([...Array(this.n).keys()], 2).sort((x, y) => x - y);
+    if (this.r() < .5) [r[i], r[j]] = [r[j], r[i]]; else { const t = r.slice(i, j + 1).reverse(); r.splice(i, j - i + 1, ...t); } return r; }
+  dobles(r) { const [a, b, c] = this.muestra([...Array(this.n - 1).keys()].map(x => x + 1), 3).sort((x, y) => x - y);
+    return r.slice(0, a).concat(r.slice(b, c), r.slice(a, b), r.slice(c)); }
+  dosOpt(ruta) {
+    let r = ruta.slice(), mejor = this.costo(r), n = this.n, mejoro = true;
+    while (mejoro) {
+      mejoro = false;
+      for (let i = 1; i < n - 1; i++) for (let j = i + 1; j < n; j++) {
+        const c2 = r.slice(0, i).concat(r.slice(i, j + 1).reverse(), r.slice(j + 1)), c = this.costo(c2);
+        if (c < mejor - 1e-9) { r = c2; mejor = c; mejoro = true; } }
+      externo: for (const L of [1, 2, 3]) for (let i = 0; i <= n - L; i++) {
+        const bl = r.slice(i, i + L), resto = r.slice(0, i).concat(r.slice(i + L));
+        for (let k = 0; k <= resto.length; k++) { if (k === i) continue;
+          const c2 = resto.slice(0, k).concat(bl, resto.slice(k)), c = this.costo(c2);
+          if (c < mejor - 1e-9) { r = c2; mejor = c; mejoro = true; break externo; } } }
+    }
+    return r;
+  }
+  paso(g) {
+    for (let t = 0; t < g; t++) {
+      const nueva = this.pob.slice(0, this.elite).map(r => r.slice());
+      if (this.opt && this.n >= 8) nueva.push(this.dosOpt(this.dobles(this.mejor)));
+      while (nueva.length < this.tam) { const p1 = this.torneo(), p2 = this.torneo();
+        let h = this.r() < this.pc ? this.cruce(p1, p2) : p1.slice(); if (this.r() < this.pm) h = this.mutar(h); nueva.push(h); }
+      this.pob = nueva; this.generacion++; this.evaluar();
+    }
+    return this.estado();
+  }
+  estado(o = 0) { const k = this.mejor.indexOf(o), ruta = this.mejor.slice(k).concat(this.mejor.slice(0, k), [o]);
+    return { generacion: this.generacion, mejor_costo: this.mejorCosto, promedio: this.promedio, ruta, usa_tramo_inexistente: this.mejorCosto >= this.pen }; }
+}
+
+let motor = 'cargando', pyodide = null, AGpy = null;
+const PYODIDE = 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/';
+function marcarMotor(tipo, txt) { const m = $('#motor'); m.className = 'motor ' + tipo; m.querySelector('span').textContent = txt; }
+const conLimite = (pr, ms) => Promise.race([pr, new Promise((_, err) => setTimeout(() => err(new Error('tiempo agotado')), ms))]);
+const cargaPy = (async () => {
+  try {
+    await conLimite((async () => {
+    await new Promise((ok, err) => { const s = document.createElement('script'); s.src = PYODIDE + 'pyodide.js'; s.onload = ok; s.onerror = () => err(new Error('sin conexión')); document.head.appendChild(s); setTimeout(() => err(new Error('tiempo agotado')), 45000); });
+    pyodide = await loadPyodide({ indexURL: PYODIDE });
+    const ns = pyodide.toPy({ __name__: 'ga_tsp' });
+    pyodide.runPython(PY, { globals: ns });
+    AGpy = ns.get('AlgoritmoGenetico');
+    // prueba rápida
+    const prueba = AGpy.callKwargs(pyodide.toPy(Array.from({ length: 5 }, (_, i) => Array.from({ length: 5 }, (_, j) => i === j ? 0 : 1 + ((i * 7 + j * 3) % 5)))), { poblacion: 10, semilla: 1 });
+    prueba.paso(1).destroy(); prueba.destroy();
+    })(), 90000);
+    motor = 'python'; marcarMotor('py', `Motor: Python ${pyodide.version} (Pyodide) — se ejecuta el mismo ga_tsp.py`);
+  } catch (e) {
+    motor = 'js'; marcarMotor('js', 'Motor: versión JavaScript del mismo algoritmo (no se pudo cargar Python: ' + (e.message || e) + ')');
+  }
+})();
+
+function crearAG(o) {
+  if (motor === 'python') {
+    const ag = AGpy.callKwargs(pyodide.toPy(M), { poblacion: o.poblacion, prob_cruce: o.prob_cruce, prob_mutacion: o.prob_mutacion, elitismo: o.elitismo, torneo: o.torneo, usar_2opt: o.usar_2opt, semilla: o.semilla });
+    return {
+      paso(g) { const p = ag.paso(g), st = p.toJs({ dict_converter: Object.fromEntries }); p.destroy(); return st; },
+      estado(org) { const p = ag.estado(org), st = p.toJs({ dict_converter: Object.fromEntries }); p.destroy(); return st; },
+      liberar() { ag.destroy(); }
+    };
+  }
+  const ag = new AGjs(M, o); return { paso: g => ag.paso(g), estado: org => ag.estado(org), liberar() {} };
+}
+
+/* =============== Ejecución =============== */
+let corriendo = false, detener = false, hist = [], ultimo = null;
+function mostrarAviso(t) { $('#avisos').innerHTML = t ? `<div class="aviso">${t}</div>` : ''; }
+$('#bDetener').onclick = () => detener = true;
+$('#bEjecutar').onclick = async () => {
+  if (corriendo) return;
+  const n = M.length;
+  if (n < 20) return mostrarAviso('Se necesitan al menos 20 ciudades.');
+  if (document.querySelector('#tabla td.mal')) return mostrarAviso('Hay celdas con valores no válidos (en rojo). Corríjalas antes de continuar.');
+  const conCostos = M.flat().filter((v, k) => v !== null && (k % (n + 1)) !== 0);
+  if (!conCostos.length) return mostrarAviso('La matriz está vacía.');
+  mostrarAviso(''); corriendo = true; detener = false;
+  $('#bEjecutar').disabled = true; $('#bDetener').disabled = false;
+  $('#prog').textContent = motor === 'cargando' ? 'Esperando a que cargue Python…' : 'Preparando…';
+  await cargaPy;
+  const sem = $('#semilla').value.trim();
+  const o = { poblacion: +$('#pob').value, prob_cruce: +$('#pc').value, prob_mutacion: +$('#pm').value, elitismo: +$('#el').value, torneo: +$('#to').value, usar_2opt: $('#opt2').checked, semilla: sem === '' ? null : (parseInt(sem) || 0) };
+  const maxG = +$('#gen').value, pac = +$('#pac').value, org = +$('#origen').value;
+  let ag;
+  try { ag = crearAG(o); } catch (e) { mostrarAviso('Error al crear el algoritmo: ' + (e.message || e)); return fin(); }
+  hist = []; const t0 = performance.now();
+  let st = ag.estado(org); hist.push([st.mejor_costo, st.promedio]); const prom0 = st.promedio;
+  let mejor = st.mejor_costo, sinMejora = 0, lote = 1;
+  pintarResultado(st, prom0);
+  while (!detener && st.generacion < maxG && sinMejora < pac) {
+    const t = performance.now();
+    for (let g = 0; g < lote && st.generacion < maxG && sinMejora < pac; g++) {
+      st = ag.paso(1); hist.push([st.mejor_costo, st.promedio]);
+      if (st.mejor_costo < mejor - 1e-9) { mejor = st.mejor_costo; sinMejora = 0; } else sinMejora++;
+    }
+    const dt = performance.now() - t; lote = Math.max(1, Math.min(50, Math.round(lote * 60 / Math.max(dt, 1))));
+    st = ag.estado(org);
+    $('#prog').textContent = `Generación ${fmt(st.generacion)} · mejor ${fmt(st.mejor_costo, 1)} · ${sinMejora} sin mejorar`;
+    pintarResultado(st, prom0);
+    await new Promise(r => setTimeout(r, 0));
+  }
+  ag.liberar();
+  const seg = (performance.now() - t0) / 1000;
+  $('#prog').textContent = `Terminado en ${fmt(seg, 1)} s · ${detener ? 'detenido por el usuario' : sinMejora >= pac ? `sin mejora en ${pac} generaciones` : 'límite de generaciones'}`;
+  pintarResultado(st, prom0, true);
+  fin();
+  function fin() { corriendo = false; $('#bEjecutar').disabled = false; $('#bDetener').disabled = true; }
+};
+
+function pintarResultado(st, prom0, final = false) {
+  ultimo = st;
+  $('#kCosto').textContent = fmt(st.mejor_costo, Number.isInteger(st.mejor_costo) ? 0 : 1);
+  $('#kGen').textContent = fmt(st.generacion);
+  $('#kMejora').textContent = prom0 > 0 ? fmt((1 - st.mejor_costo / prom0) * 100, 0) + ' %' : '—';
+  const r = st.ruta;
+  $('#ruta').innerHTML = r.map((c, i) => `<span class="c ${i === 0 || i === r.length - 1 ? 'o' : ''}">${i < r.length - 1 ? (i + 1) + '. ' : ''}${esc(nombres[c])}</span>`).join('<span class="f">→</span>');
+  if (st.usa_tramo_inexistente) mostrarAviso('Atención: la mejor ruta encontrada usa al menos un tramo sin conexión (celda vacía). Puede que no exista una ruta que visite todas las ciudades con los caminos disponibles.');
+  if (final || hist.length % 5 === 1) {
+    let acum = 0;
+    $('#tramos').innerHTML = '<tr><th>#</th><th>Desde</th><th>Hasta</th><th style="text-align:right">Costo</th><th style="text-align:right">Acumulado</th></tr>' +
+      r.slice(0, -1).map((a, i) => { const b = r[i + 1], c = M[a][b]; acum += c ?? 0;
+        return `<tr><td>${i + 1}</td><td>${esc(nombres[a])}</td><td>${esc(nombres[b])}</td><td class="n">${c === null ? 'sin conexión' : fmt(c, Number.isInteger(c) ? 0 : 1)}</td><td class="n">${fmt(acum, 0)}</td></tr>`; }).join('');
+  }
+  dibujarMapa(r); dibujarConv();
+}
+
+/* =============== Gráficas =============== */
+function lienzo(c, h) { const w = c.clientWidth, d = devicePixelRatio || 1; c.width = w * d; c.height = h * d; c.style.height = h + 'px'; const g = c.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); return [g, w]; }
+function posiciones() {
+  if (coords && coords.length === M.length) return { P: coords, real: true };
+  // Escalamiento multidimensional clásico: ubica las ciudades en 2D respetando (aprox.) las distancias
+  const n = M.length; let mx = 0; M.forEach(f => f.forEach(v => { if (v !== null && v > mx) mx = v; }));
+  const D2 = Array.from({ length: n }, (_, i) => Array.from({ length: n }, (_, j) => { if (i === j) return 0; const a = M[i][j] ?? M[j][i] ?? mx, b = M[j][i] ?? M[i][j] ?? mx, d = (a + b) / 2; return d * d; }));
+  const fm = D2.map(f => f.reduce((s, v) => s + v, 0) / n), gm = fm.reduce((s, v) => s + v, 0) / n;
+  const B = D2.map((f, i) => f.map((v, j) => -0.5 * (v - fm[i] - fm[j] + gm)));
+  const vecs = [];
+  for (let k = 0; k < 2; k++) {
+    let v = Array.from({ length: n }, (_, i) => Math.sin(i * 1.7 + k + 1)), lam = 0;
+    for (let it = 0; it < 200; it++) {
+      let w = B.map(f => f.reduce((s, x, j) => s + x * v[j], 0));
+      vecs.forEach(([u, l]) => { const d = u.reduce((s, x, j) => s + x * v[j], 0); w = w.map((x, j) => x - l * d * u[j]); });
+      const nr = Math.hypot(...w) || 1; lam = nr; v = w.map(x => x / nr);
+    }
+    vecs.push([v, lam]);
+  }
+  return { P: Array.from({ length: n }, (_, i) => [vecs[0][0][i] * Math.sqrt(vecs[0][1]), vecs[1][0][i] * Math.sqrt(vecs[1][1])]), real: false };
+}
+let posCache = null;
+function dibujarMapa(ruta) {
+  const c = $('#mapa'), [g, w] = lienzo(c, 420), h = 420, { P, real } = posCache || (posCache = posiciones());
+  $('#notaMapa').textContent = real ? (coords === null ? '' : (nombres[0] === 'Bogotá' ? 'Posiciones geográficas reales (latitud y longitud).' : 'Posiciones de las ciudades generadas al azar.')) : 'Posiciones aproximadas calculadas a partir de las distancias de la matriz (escalamiento multidimensional).';
+  const xs = P.map(p => p[0]), ys = P.map(p => p[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+  const m = 30, s = Math.min((w - 2 * m) / ((x1 - x0) || 1), (h - 2 * m) / ((y1 - y0) || 1));
+  const ox = (w - (x1 - x0) * s) / 2, oy = (h - (y1 - y0) * s) / 2;
+  const X = i => ox + (P[i][0] - x0) * s, Y = i => h - (oy + (P[i][1] - y0) * s);
+  g.fillStyle = '#f7f8fb'; g.fillRect(0, 0, w, h);
+  if (ruta) {
+    g.strokeStyle = '#2456d6'; g.lineWidth = 2; g.lineJoin = 'round';
+    for (let k = 0; k < ruta.length - 1; k++) {
+      const a = ruta[k], b = ruta[k + 1], xa = X(a), ya = Y(a), xb = X(b), yb = Y(b);
+      g.beginPath(); g.moveTo(xa, ya); g.lineTo(xb, yb); g.stroke();
+      const ang = Math.atan2(yb - ya, xb - xa), mx = (xa + xb) / 2, my = (ya + yb) / 2;
+      g.fillStyle = '#2456d6'; g.beginPath(); g.moveTo(mx + 6 * Math.cos(ang), my + 6 * Math.sin(ang));
+      g.lineTo(mx + 6 * Math.cos(ang + 2.5), my + 6 * Math.sin(ang + 2.5)); g.lineTo(mx + 6 * Math.cos(ang - 2.5), my + 6 * Math.sin(ang - 2.5)); g.fill();
+    }
+  }
+  const org = ruta ? ruta[0] : +$('#origen').value;
+  g.font = '11.5px IBM Plex Sans, sans-serif'; g.textBaseline = 'middle';
+  P.forEach((p, i) => {
+    g.beginPath(); g.arc(X(i), Y(i), i === org ? 7 : 5, 0, 7); g.fillStyle = i === org ? '#16202e' : '#fff'; g.fill();
+    g.lineWidth = 2; g.strokeStyle = i === org ? '#fff' : '#2456d6'; g.stroke();
+    if (i === org) { g.beginPath(); g.arc(X(i), Y(i), 9, 0, 7); g.strokeStyle = '#16202e'; g.lineWidth = 1.5; g.stroke(); }
+    const lbl = nombres[i], right = X(i) < w - 90;
+    g.textAlign = right ? 'left' : 'right'; g.fillStyle = 'rgba(247,248,251,.85)';
+    const tw = g.measureText(lbl).width; g.fillRect(right ? X(i) + 8 : X(i) - 10 - tw, Y(i) - 8, tw + 3, 16);
+    g.fillStyle = '#16202e'; g.fillText(lbl, right ? X(i) + 9 : X(i) - 9, Y(i));
+  });
+  const cm = $('#chMapa');
+  c.onmousemove = e => { const r = c.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+    let best = -1, bd = 14; P.forEach((p, i) => { const d = Math.hypot(X(i) - mx, Y(i) - my); if (d < bd) { bd = d; best = i; } });
+    if (best < 0 || !ultimo) return tip(cm, null);
+    const pos = ultimo.ruta.indexOf(best); tip(cm, `<b>${esc(nombres[best])}</b> · parada ${pos + 1} de ${ultimo.ruta.length - 1}`, X(best), Y(best)); };
+  c.onmouseleave = () => tip(cm, null);
+}
+function tip(cont, html, x, y) { const t = cont.querySelector('.tip'); if (!html) return t.style.opacity = 0; t.innerHTML = html; t.style.opacity = 1;
+  t.style.left = Math.max(0, Math.min(x + 12, cont.clientWidth - t.offsetWidth)) + 'px'; t.style.top = Math.max(0, y - 34) + 'px'; }
+function dibujarConv() {
+  const c = $('#conv'), [g, w] = lienzo(c, 220), h = 220, pad = { l: 56, r: 12, t: 10, b: 26 };
+  g.clearRect(0, 0, w, h);
+  if (hist.length < 2) return;
+  const ys = hist.flat(), lo = Math.min(...ys), hi = Math.max(...hist.map(x => x[1]).slice(0, Math.max(2, hist.length)));
+  const X = i => pad.l + i / (hist.length - 1) * (w - pad.l - pad.r), Y = v => pad.t + (hi - v) / ((hi - lo) || 1) * (h - pad.t - pad.b);
+  g.font = '11px IBM Plex Mono, monospace'; g.fillStyle = '#7c8799'; g.textAlign = 'right';
+  for (let k = 0; k <= 4; k++) { const v = lo + (hi - lo) * k / 4; g.strokeStyle = '#eef0f4'; g.lineWidth = 1; g.beginPath(); g.moveTo(pad.l, Y(v)); g.lineTo(w - pad.r, Y(v)); g.stroke(); g.fillText(fmt(v), pad.l - 6, Y(v) + 4); }
+  g.textAlign = 'center'; g.fillText('0', X(0), h - 8); g.fillText(fmt(hist.length - 1), X(hist.length - 1) - 8, h - 8); g.fillText('generación', (pad.l + w) / 2, h - 8);
+  [[1, '#a9b3c4'], [0, '#2456d6']].forEach(([k, col]) => { g.strokeStyle = col; g.lineWidth = 2; g.beginPath(); hist.forEach((p, i) => i ? g.lineTo(X(i), Y(p[k])) : g.moveTo(X(i), Y(p[k]))); g.stroke(); });
+  const cc = $('#chConv');
+  c.onmousemove = e => { const r = c.getBoundingClientRect(), i = Math.max(0, Math.min(hist.length - 1, Math.round((e.clientX - r.left - pad.l) / (w - pad.l - pad.r) * (hist.length - 1))));
+    tip(cc, `Generación ${i}: mejor ${fmt(hist[i][0], 1)} · promedio ${fmt(hist[i][1], 1)}`, X(i), Y(hist[i][0])); };
+  c.onmouseleave = () => tip(cc, null);
+}
+
+/* =============== Inicio =============== */
+if (!cargarGuardada() || M.length < MIN_CIUDADES) ejemplo();
+pintarTabla();
+const _pt = pintarTabla; pintarTabla = function () { posCache = null; _pt(); dibujarMapa(null); };
+dibujarMapa(null);
+addEventListener('resize', () => { if (ultimo) { dibujarMapa(ultimo.ruta); dibujarConv(); } else dibujarMapa(null); });
+$('#tabla').addEventListener('change', () => { posCache = null; if (!corriendo) dibujarMapa(ultimo ? ultimo.ruta : null); });
+$('#origen').addEventListener('change', () => { if (!corriendo) dibujarMapa(ultimo ? ultimo.ruta : null); });
+</script>
+</body>
+</html>
